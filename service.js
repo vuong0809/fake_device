@@ -1,27 +1,38 @@
 const { workerData, parentPort } = require('worker_threads')
 
-// You can do any heavy stuff here, in a synchronous way
-// without blocking the "main thread"
-// parentPort.postMessage({ hello: workerData })
-
-
-var mqtt = require('mqtt')
-const client = mqtt.connect('mqtt://192.168.1.43:9883', {
-    username: workerData.token
-})
-// console.log('start ',workerData.index )
 parentPort.postMessage(workerData)
+
+var token = workerData.device.token
+var mqtt = require('mqtt')
+const client = mqtt.connect('mqtt://localhost:1883', {
+    username: token
+})
+
+
+var time_old = 0
+var time_now = 0
+var time_set = 60000
+
+var max = 11
+var min = 10
+var decimals = 2
+
 client.on('connect', function () {
     console.log('connected', workerData.index)
     setInterval(() => {
         data = {
-            "time": Date(Date.now()),
-            "temperature": Math.random(),
-            "humidity": Math.random()
+            "temp": (Math.random() * (max - min) + min).toFixed(decimals || 2),
+            "hum": (Math.random() * (50 - 45) + 45).toFixed(decimals || 2)
         }
-        // console.log(`publish device id: ${workerData.index}`)
         client.publish('v1/devices/me/attributes', JSON.stringify(data));
-    }, 10000)
+
+        if (time_now - time_old >= time_set) {
+            client.publish('v1/devices/me/telemetry', JSON.stringify(data));
+
+            time_old = time_now
+        }
+        time_now += 1000
+    }, 1000)
 })
 
 

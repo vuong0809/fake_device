@@ -1,19 +1,18 @@
-const fs = require("fs");
-const { parse } = require("csv-parse");
+// const fs = require("fs");
+// const { parse } = require("csv-parse");
 
 
-var token = []
+var token = [
+    {
+        token: "xSlRL32JSZgzqdm4VFxQ",
+        device_type: "WEATHER"
+    },
+    {
+        token: "QWiP55rvirtCiPhAJy7n",
+        device_type: "WEATHER"
+    }
+]
 var count = 0
-
-
-
-
-
-
-
-
-
-
 
 const { Worker } = require('worker_threads')
 function runService(workerData) {
@@ -30,27 +29,16 @@ function runService(workerData) {
 
 
 async function run() {
-    fs.createReadStream("./device_credentials.csv")
-        .pipe(parse({ delimiter: ",", from_line: 2 }))
-        .on("data", function (row) {
-            token.push(row[0])
-        })
-        .on("end", function () {
-            console.log("Start______________");
-            send_mqtt()
-        })
-        .on("error", function (error) {
-            console.log(error.message);
-        });
+    send_mqtt()
 }
 
 run().catch(err => console.error(err))
 
 
-async function send_mqtt(){
+async function send_mqtt() {
     for (i = 0; i < token.length; i++) {
         const result = await runService({
-            token : token[i],
+            device: token[i],
             index: i
         })
         // console.log(result, i);
